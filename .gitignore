@@ -15,6 +15,7 @@ vendor/
 
 # Output / generated
 output/
+output*/
 *.tfstate
 *.tfstate.*
 .terraform/

@@ -37,6 +37,7 @@ func (subnetHandler) GenerateHCL(node *diagram.Node, d *diagram.Diagram, refs Re
 	p := node.Properties
 	terraform.SetAttributeStr(body, "cidr_block", diagram.GetStr(p, "cidr_block"))
 	terraform.SetAttributeStr(body, "availability_zone", diagram.GetStr(p, "availability_zone"))
+	terraform.SetAttributeBool(body, "map_public_ip_on_launch", diagram.GetBool(p, "map_public_ip_on_launch"))
 
 	// vpc_id from "contains" edge: source is VPC (refs store "aws_vpc.node_3")
 	for _, e := range d.EdgesWithTarget(node.ID) {

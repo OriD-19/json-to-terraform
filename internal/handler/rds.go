@@ -6,6 +6,7 @@ import (
 	"github.com/json-to-terraform/parser/internal/registry"
 	"github.com/json-to-terraform/parser/internal/result"
 	"github.com/json-to-terraform/parser/internal/terraform"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type rdsHandler struct{}
@@ -48,19 +49,47 @@ func (rdsHandler) GenerateHCL(node *diagram.Node, d *diagram.Diagram, refs RefMa
 
 	p := node.Properties
 	terraform.SetAttributeStr(body, "engine", diagram.GetStr(p, "engine"))
+	terraform.SetAttributeStr(body, "engine_version", diagram.GetStr(p, "engine_version"))
 	terraform.SetAttributeStr(body, "instance_class", diagram.GetStr(p, "instance_class"))
 	terraform.SetAttributeInt(body, "allocated_storage", diagram.GetInt(p, "allocated_storage"))
+	terraform.SetAttributeStr(body, "storage_type", diagram.GetStr(p, "storage_type"))
 	terraform.SetAttributeStr(body, "db_name", diagram.GetStr(p, "db_name"))
 	terraform.SetAttributeStr(body, "username", diagram.GetStr(p, "username"))
-	terraform.SetAttributeStr(body, "password", diagram.GetStr(p, "password"))
+	if pw := diagram.GetStr(p, "password"); pw != "" {
+		body.SetAttributeValue("password", cty.StringVal(pw))
+	}
+	if diagram.GetBool(p, "skip_final_snapshot") {
+		body.SetAttributeValue("skip_final_snapshot", cty.BoolVal(true))
+	}
+	if n := diagram.GetInt(p, "backup_retention_period"); n > 0 {
+		terraform.SetAttributeInt(body, "backup_retention_period", n)
+	}
+	terraform.SetAttributeBool(body, "multi_az", diagram.GetBool(p, "multi_az"))
 
+	// db_subnet_group_name from "contains" edge (source = db_subnet_group); vpc_security_group_ids from "connects_to" (source = security_group)
+	var sgRefs []string
 	for _, e := range d.EdgesWithTarget(node.ID) {
 		if e.Type == "contains" {
-			if addr, ok := refs[e.Source]; ok {
-				body.SetAttributeTraversal("db_subnet_group_name", refTraversal(addr, "name"))
+			sourceNode := d.NodeByID(e.Source)
+			if sourceNode != nil && sourceNode.Type == "db_subnet_group" {
+				if addr, ok := refs[e.Source]; ok {
+					body.SetAttributeTraversal("db_subnet_group_name", refTraversal(addr, "name"))
+				}
 				break
 			}
 		}
+		if e.Type == "connects_to" {
+			if addr, ok := refs[e.Source]; ok {
+				sgRefs = append(sgRefs, addr)
+			}
+		}
+	}
+	if len(sgRefs) > 0 {
+		tokens := make([]hclwrite.Tokens, len(sgRefs))
+		for i, addr := range sgRefs {
+			tokens[i] = hclwrite.TokensForTraversal(refTraversal(addr, "id"))
+		}
+		body.SetAttributeRaw("vpc_security_group_ids", hclwrite.TokensForTuple(tokens))
 	}
 
 	tags := diagram.GetStrMap(p, "tags")

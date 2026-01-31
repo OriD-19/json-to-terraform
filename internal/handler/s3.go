@@ -46,9 +46,13 @@ func (s3Handler) GenerateHCL(node *diagram.Node, d *diagram.Diagram, refs RefMap
 		ver := body.AppendNewBlock("versioning", nil)
 		ver.Body().SetAttributeValue("enabled", cty.BoolVal(true))
 	}
-	if diagram.GetBool(p, "block_public_acls") {
+	if diagram.GetBool(p, "block_public_acls") || diagram.GetBool(p, "block_public_policy") {
 		acl := body.AppendNewBlock("public_access_block", nil)
-		acl.Body().SetAttributeValue("block_public_acls", cty.BoolVal(true))
+		acl.Body().SetAttributeValue("block_public_acls", cty.BoolVal(diagram.GetBool(p, "block_public_acls")))
+		acl.Body().SetAttributeValue("block_public_policy", cty.BoolVal(diagram.GetBool(p, "block_public_policy")))
+	}
+	if diagram.GetBool(p, "force_destroy") {
+		body.SetAttributeValue("force_destroy", cty.BoolVal(true))
 	}
 
 	tags := diagram.GetStrMap(p, "tags")
