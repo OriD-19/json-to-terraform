@@ -64,9 +64,10 @@ func TfvarsFromMetadata(m *diagram.Metadata) []byte {
 }
 
 // varTraversal builds hcl.Traversal for var.name (e.g. var.aws_region).
+// HCL treats a traversal as absolute only when the first step is TraverseRoot by value (not pointer).
 func varTraversal(name string) hcl.Traversal {
 	return hcl.Traversal{
-		&hcl.TraverseRoot{Name: "var"},
-		&hcl.TraverseAttr{Name: name},
+		hcl.TraverseRoot{Name: "var"},
+		hcl.TraverseAttr{Name: name},
 	}
 }

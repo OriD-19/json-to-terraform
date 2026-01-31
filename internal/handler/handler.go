@@ -6,6 +6,7 @@ import (
 )
 
 // refTraversal builds hcl.Traversal for a resource address and attribute (e.g. aws_vpc.node_3.id).
+// HCL requires the first step to be TraverseRoot by value (not pointer) for an absolute traversal.
 func refTraversal(addr, attr string) hcl.Traversal {
 	var t hcl.Traversal
 	idx := 0
@@ -13,9 +14,9 @@ func refTraversal(addr, attr string) hcl.Traversal {
 		if addr[i] == '.' {
 			part := addr[idx:i]
 			if len(t) == 0 {
-				t = append(t, &hcl.TraverseRoot{Name: part})
+				t = append(t, hcl.TraverseRoot{Name: part})
 			} else {
-				t = append(t, &hcl.TraverseAttr{Name: part})
+				t = append(t, hcl.TraverseAttr{Name: part})
 			}
 			idx = i + 1
 		}
@@ -23,13 +24,13 @@ func refTraversal(addr, attr string) hcl.Traversal {
 	if idx < len(addr) {
 		part := addr[idx:]
 		if len(t) == 0 {
-			t = append(t, &hcl.TraverseRoot{Name: part})
+			t = append(t, hcl.TraverseRoot{Name: part})
 		} else {
-			t = append(t, &hcl.TraverseAttr{Name: part})
+			t = append(t, hcl.TraverseAttr{Name: part})
 		}
 	}
 	if attr != "" {
-		t = append(t, &hcl.TraverseAttr{Name: attr})
+		t = append(t, hcl.TraverseAttr{Name: attr})
 	}
 	return t
 }
