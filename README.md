@@ -78,7 +78,55 @@ Supported node types: `vpc`, `subnet`, `security_group`, `ec2_instance`, `lambda
 - `internal/terraform` – Terraform builder and HCL helpers
 - `internal/result` – Parse result and error types
 - `internal/logger` – Structured logging
+- `cmd/lambda` – Lambda handler (serverless API)
 - `testdata/` – Sample diagram JSON files
+
+## Docker
+
+Two-stage build (Alpine builder for fast, lightweight builds; minimal Alpine runtime):
+
+```bash
+docker build -t json2tf:latest .
+docker run --rm -v "$(pwd)/testdata:/in" -v "$(pwd)/out:/out" json2tf:latest -input /in/single_ec2.json -o /out
+```
+
+## Lambda (serverless API)
+
+The same parser runs as an AWS Lambda function behind API Gateway. Build the Lambda image with `Dockerfile.lambda` (two-stage: Alpine builder, AWS Lambda `provided:al2` runtime):
+
+```bash
+go mod tidy
+docker build -f Dockerfile.lambda -t json2tf-lambda:latest .
+```
+
+**Invoke payload** (e.g. from API Gateway or direct invoke):
+
+```json
+{
+  "body": "<diagram JSON string>",
+  "isBase64": false,
+  "emitTfvars": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "success": true,
+  "errors": [],
+  "warnings": [],
+  "files": {
+    "main.tf": "<base64>",
+    "variables.tf": "<base64>",
+    "versions.tf": "<base64>",
+    "terraform.tfvars": "<base64>"
+  }
+}
+```
+
+Deploy the image to Lambda (console or CLI), then expose via API Gateway HTTP API or REST API. Decode the `files` values from base64 on the client.
 
 ## Programmatic use
 

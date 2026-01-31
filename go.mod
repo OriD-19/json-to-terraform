@@ -3,6 +3,7 @@ module github.com/json-to-terraform/parser
 go 1.21
 
 require (
+	github.com/aws/aws-lambda-go v1.47.0
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/zclconf/go-cty v1.13.0
 )
