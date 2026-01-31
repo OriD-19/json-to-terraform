@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "name": "single-ec2",
+    "description": "Single EC2 instance",
+    "environment": "dev"
+  },
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "ec2_instance",
+      "label": "Web Server",
+      "position": { "x": 100, "y": 200 },
+      "properties": {
+        "instance_type": "t3.micro",
+        "ami": "ami-0c55b159cbfafe1f0",
+        "key_name": "my-key",
+        "tags": {
+          "Name": "WebServer",
+          "Environment": "production"
+        }
+      }
+    }
+  ],
+  "edges": []
+}

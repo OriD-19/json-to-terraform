@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "name": "lambda-example",
+    "description": "Lambda function",
+    "environment": "dev"
+  },
+  "nodes": [
+    {
+      "id": "node-lambda",
+      "type": "lambda_function",
+      "label": "Data Processor",
+      "position": { "x": 300, "y": 200 },
+      "properties": {
+        "runtime": "python3.9",
+        "handler": "index.handler",
+        "memory_size": 256,
+        "timeout": 60,
+        "environment_variables": {
+          "STAGE": "prod"
+        }
+      }
+    }
+  ],
+  "edges": []
+}
